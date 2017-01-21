@@ -1,0 +1,452 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include<iomanip>
+using namespace std;
+//family project
+class family
+{
+public:
+	family::family();
+	void family::read_family();
+	void family::menu(int &selection);
+	void family::add_family();
+	void family::add_children();
+	void family::find_family();
+	void family::print_family();
+	void family::write_family();
+	void family::modify_family();
+private:
+	struct child_node
+	{
+		string child_name;
+		string child_age;
+		child_node *next_child;
+	};
+	child_node *prev_child, *current_child;
+
+	struct family_node
+	{
+		string code;
+		string last_name;
+		string father;
+		string mother;
+		child_node *first_child;
+		family_node *next;
+	};
+	family_node *first, *prev, *current, *save;
+	ifstream infile, inchildfile;
+	ofstream outfile, outchildfile;
+};
+
+int main()
+{
+	int selection;
+	family fam;
+	fam.read_family();
+	fam.menu(selection);
+	while (selection != 6)
+	{
+		if (selection == 1)
+			fam.add_family();
+		else
+			if (selection == 2)
+				fam.add_children();
+			else
+				if (selection == 3)
+					fam.modify_family();
+				else
+					if (selection == 4)
+						fam.find_family();
+					else
+						if (selection == 5)
+							fam.print_family();
+		fam.menu(selection);
+	}//while loop
+	fam.write_family();
+	system("pause");
+	return 0;
+}
+
+void family::menu(int &selection)
+{
+	cout << endl << endl;
+	cout << "1.  ADD A NEW FAMILY" << endl;
+	cout << "2.  ADD CHILDREN TO FAMILY" << endl;
+	cout << "3.  MODIFY FAMILY" << endl;
+	cout << "4.  FIND FAMILY " << endl;
+	cout << "5.  PRINT ALL FAMILIES " << endl;
+	cout << "6.  EXIT " << endl;
+	cout << "Enter your selection ";
+	cin >> selection;
+	cout << endl << endl;
+}
+
+family::family()
+{
+	//create a dummy first link
+	first = new family_node;
+	first->next = 0;
+	prev = first;
+}
+
+void family::add_family()
+{
+	char children;
+	current = new family_node;
+	cout << "Enter the family code ";
+	cin >> current->code;
+	cout << "Enter the family name ";
+	cin >> current->last_name;
+	cout << "Enter father's first name ";
+	cin >> current->father;
+	cout << "Enter mother's first name ";
+	cin >> current->mother;
+	current->first_child = 0;
+	current->next = 0;
+	prev->next = current;
+	prev = current;
+	cout << endl << "Do you want to enter children ? y/n ";
+	cin >> children;
+	while (children != 'n')
+	{
+		current_child = new child_node;
+		cout << endl << "Enter the child's name ";
+		cin >> current_child->child_name;
+		cout << "Enter the child's age ";
+		cin >> current_child->child_age;
+		if (current->first_child == 0)
+			//first child
+		{
+			current->first_child = current_child;
+			current_child->next_child = 0;
+			prev_child = current_child;
+		}
+		else
+			//not first child
+		{
+			prev_child->next_child = current_child;
+			current_child->next_child = 0;
+			prev_child = current_child;
+		}
+		cout << "Enter another ? y/n ";
+		cin >> children;
+	}
+}
+
+void family::print_family()
+{
+	//print the list
+	current = first->next;
+	cout << "Family List :" << endl;
+
+	while (current != 0)
+	{
+		cout << setiosflags(ios::left);
+		cout << endl << endl;
+		cout << "FAMILY          " << setw(15) << current->last_name << endl;
+		cout << "=========================" << endl;
+		cout << "Code          = " << setw(15) << current->code << endl;
+		cout << "Father        = " << setw(15) << current->father << endl;
+		cout << "Mother        = " << setw(15) << current->mother << endl;
+		if (current->first_child == 0)
+			cout << "There are no children" << endl;
+		else
+		{
+			cout << endl << "Children and ages" << endl;
+			cout << "-----------------" << endl;
+			current_child = current->first_child;
+			while (current_child != 0)
+			{
+
+				cout << setiosflags(ios::left) << setw(15) << current_child->child_name;
+				cout << setprecision(2) << setw(10) << current_child->child_age << endl;
+				current_child = current_child->next_child;
+			}//while loop for children
+		}
+		current = current->next;
+	}//while loop for family
+}
+
+void family::find_family()
+{
+	int found = 1;
+	string codein;
+	cout << "Enter the family code ";
+	cin >> codein;
+	current = first->next;
+	while (current != 0)
+	{
+		if (codein == current->code)
+		{
+			cout << setiosflags(ios::left);
+			cout << endl << current->last_name << " Family Found" << endl;
+			cout << "=========================" << endl;
+			cout << "Family Code   = " << setw(15) << current->code << endl;
+			cout << "Father        = " << setw(15) << current->father << endl;
+			cout << "Mother        = " << setw(15) << current->mother << endl;
+			found = 0;
+			if (current->first_child == 0)
+				cout << "There are no children" << endl;
+			else
+			{
+				cout << endl << "Children and ages" << endl;
+				cout << "-----------------" << endl;
+				current_child = current->first_child;
+				while (current_child != 0)
+				{
+
+					cout << setiosflags(ios::left) << setw(15) << current_child->child_name;
+					cout << setprecision(2) << setw(10) << current_child->child_age << endl;
+					current_child = current_child->next_child;
+				}//while loop for children
+			}//else
+		}
+		current = current->next;
+	}
+	if (found == 1)
+		cout << "Family is not in the list " << endl;
+
+}
+
+void family::read_family()
+{
+	char family_code[10];
+	int size, i, age;
+	string name, value, child;
+	infile.open("family.dat");
+	while (!infile.eof() && !infile.fail())
+	{
+		current = new family_node;
+		infile >> current->code;
+		infile >> current->last_name;
+		infile >> current->father;
+		infile >> current->mother;
+		current->first_child = 0;
+		size = current->code.length();
+		name = current->code;
+		//cout<<"the length of the name = "<<size<<" "<<current->code<<endl;
+		family_code[0] = 'F';
+		for (i = 1;i <= 4;++i)
+		{
+			family_code[i] = name[i];
+		}
+		family_code[5] = '.';
+		family_code[6] = 'd';
+		family_code[7] = 'a';
+		family_code[8] = 't';
+		family_code[9] = '\0';
+
+		// cout<<"file name = "<<family_code<<endl;
+		inchildfile.open(family_code);
+		inchildfile.clear();
+		while (!inchildfile.eof() && !inchildfile.fail())
+		{
+			current_child = new child_node;
+			inchildfile >> current_child->child_name >> current_child->child_age;
+			if (current->first_child == 0)
+				//first child
+			{
+				current->first_child = current_child;
+				current_child->next_child = 0;
+				prev_child = current_child;
+			}
+			else
+				//not first child
+			{
+				prev_child->next_child = current_child;
+				current_child->next_child = 0;
+				prev_child = current_child;
+			}
+			//cout<<current_child->child_name<<" "<<current_child->child_age<<endl;
+		}//end of read the child file
+		inchildfile.close();
+
+		//set family pointers
+		current->next = 0;
+		prev->next = current;
+		prev = current;
+	}//end of read the family file
+	infile.close();
+}
+
+void family::add_children()
+{
+	/*in here it delete all the children in the family and add the new ones only. Also, When I add
+	children to F1234 it gets into infinte loop*/
+	bool found = 0;
+	string searchid;
+	child_node *add_child;
+	char more = 'y';
+	cout << "enter the family id to add children";
+	cin >> searchid;
+	current = first->next;
+	while (current != 0)
+	{
+		if (current->code == searchid)
+		{
+			found = 1;
+			cout << "family found:" << endl;
+			save = current;
+		}
+
+		current = current->next;
+	}
+
+
+	if (found == 0)
+		cout << "Family not found" << endl;
+	else
+
+	{
+		current = save;
+		while (more == 'y')
+		{
+
+			add_child = new child_node;
+			cout << endl << "Enter the child's name ";
+			cin >> add_child->child_name;
+			cout << "Enter the child's age ";
+			cin >> add_child->child_age;
+
+			current_child = current->first_child;
+			if (current->first_child == 0)
+				//first child
+			{
+				current->first_child = add_child;
+				add_child->next_child = 0;
+				prev_child = add_child;
+			}
+			else
+				//not first child
+			{
+				while (current_child != 0)
+				{
+					prev_child = current_child;
+					current_child = current_child->next_child;
+				}
+				prev_child->next_child = add_child;
+				add_child->next_child = 0;
+				prev_child = add_child;
+			}
+
+			cout << "Enter another ? y/n ";
+			cin >> more;
+		}
+
+
+	}
+	current = current->next;
+
+}
+
+void family::modify_family()
+{
+	bool found = 0;
+	int selection;
+	string searchid;
+	cout << "Enter the family code ";
+	cin >> searchid;
+	current = first->next;
+	while (current != 0)
+	{
+		if (searchid == current->code)
+		{
+			found = 1;
+
+			cout << " Family Found  " << current->code << endl;
+			cout << "Please Choose What to Modify From the List: " << endl;
+			cout << "1.  Family Name" << endl;
+			cout << "2.  Father Name" << endl;
+			cout << "3.  Mother Name" << endl;
+			cout << "4.  EXIT " << endl;
+			cin >> selection;
+
+
+
+			while (selection != 4)
+			{
+				if (selection == 1)
+				{
+					cout << "Please, Enter The New Name " << endl;
+					cin >> current->last_name;
+				}
+
+				if (selection == 2)
+				{
+					cout << "Please, Enter The New Name " << endl;
+					cin >> current->father;
+				}
+
+				if (selection == 3)
+				{
+					cout << "Please, Enter The New Name " << endl;
+					cin >> current->mother;
+				}
+
+				cout << "Do you want to modify anything else? " << endl;
+				cout << "1.  Family Name" << endl;
+				cout << "2.  Father Name" << endl;
+				cout << "3.  Mother Name" << endl;
+				cout << "4.  EXIT " << endl;
+				cin >> selection;
+				cout << endl;
+
+
+
+			}
+
+		}
+		current = current->next;
+	}
+	if (found == 0)
+		cout << "Family not Found " << endl;
+
+}		
+
+void family::write_family()
+{
+	
+	ofstream outfile, outchildfile;
+	outfile.open("family.dat");
+	current = first->next;
+
+	while (current != 0)
+	{
+		if (current->next == 0)
+			outfile << current->code << " " << current->last_name << " " << current->father << " " << current->mother;
+		else
+			outfile << current->code << " " << current->last_name << " " << current->father << " " << current->mother << endl;
+
+
+		current_child = current->first_child;
+
+		if (current->first_child != 0)
+		{
+			outchildfile.open(current->code + ".dat");
+
+			while (current_child != 0)
+			{
+
+				if (current_child->next_child == 0)
+					outchildfile << current_child->child_name << " " << current_child->child_age;
+
+				else
+					outchildfile << current_child->child_name << " " << current_child->child_age << endl;
+
+				current_child = current_child->next_child;
+
+			}
+
+
+
+			outchildfile.close();
+		}
+		current = current->next;
+
+	}
+
+
+	outfile.close();
+
+}
